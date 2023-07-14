@@ -1,2 +1,2 @@
-# -intel_ai_program
+# example
 0714 코드관리
