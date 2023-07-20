@@ -1,0 +1,25 @@
+fun repeatWord(input:String, n:Int): String  {
+    var answer:String = ""
+    for (i in 1..n) {
+        if (1 <= n && n <= 10) {
+            answer += input
+        }
+    }
+    return(answer)
+}
+
+fun main() {
+    val result = repeatWord("Kotlin", 3)
+    println(result)
+}
+
+// repeatWord("문자열을 입력하면", 반복수)
+
+// 반복수만큼 반복하는 문장 작성
+// 		만약 반복수가 1보다 크거나 같고 10보다 작거나 같으면
+// 			answer에 input을 반복수만큼 더해서 저장한다
+// answer를 반환한다
+
+// 결과에 인풋을 반복수만큼 저장한다
+// 반환값에 결과를 넣는다
+
