@@ -9,14 +9,14 @@
 
 
 ### :pencil2: STUDYING
-![Java](https://img.shields.io/badge/Java-000000.svg?&style=flat&logo=Java&logoColor=white) <img src="https://img.shields.io/badge/Kotlin-000000?style=flat&logo=kotlin&logoColor=#7F52FF"/> <img src="https://img.shields.io/badge/Android-000000?style=flat&logo=android&logoColor=#3DDC84"/> <img src="https://img.shields.io/badge/JetpackCompose-000000?style=flat&logo=jetpackcompose&logoColor=#4285F4"/> <img src="https://img.shields.io/badge/Python-000000?style=flat&logo=python&logoColor=#3776AB"/>
+![Java](https://img.shields.io/badge/Java-007396.svg?&style=flat&logo=Java&logoColor=white) <img src="https://img.shields.io/badge/Kotlin-0095D5?style=flat&logo=kotlin&logoColor=#7F52FF"/> <img src="https://img.shields.io/badge/Android-3DDC84?style=flat&logo=android&logoColor=#3DDC84"/> <img src="https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=#3776AB"/>
 
 <br/>
 <br/>
 <br/>
 
-
+<!-- GitHub Stats -->
 ![SangEun's GitHub stats](https://github-readme-stats.vercel.app/api?username=vmkmym&show_icons=true&theme=highcontrast)  ![Top Langs](https://github-readme-stats.vercel.app/api/top-langs/?username=vmkmym&layout=compact&theme=synthwave)
 
-
+<!-- Some other section or projects showcase can be added here. -->
 </div>
