@@ -11,8 +11,9 @@
 <br/>
 <br/>
 
-![상은's GitHub stats](https://github-readme-stats.vercel.app/api?username=vmkmym&show_icons=true&theme=highcontrast&hide=java,python,html)  ![Top Langs](https://github-readme-stats.vercel.app/api/top-langs/?username=vmkmym&layout=compact&theme=synthwave&hide=java,python,html)
+<!-- GitHub Stats -->
+![상은's GitHub stats](https://github-readme-stats.vercel.app/api?username=vmkmym&show_icons=true&theme=highcontrast)  ![Top Langs](https://github-readme-stats.vercel.app/api/top-langs/?username=vmkmym&layout=compact&theme=synthwave)
 
-
-
+<!-- Badgen to show views count -->
+![Profile Views](https://badgen.net/github/views/vmkmym/vmkmym)
 </div>
