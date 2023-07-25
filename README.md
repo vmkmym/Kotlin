@@ -17,7 +17,7 @@
 
 <!-- GitHub Stats -->
 <!-- Replace "your_github_username" with your actual GitHub username -->
-![Kim Sang Eun's GitHub stats](https://github-readme-stats.vercel.app/api?username=vmkmym&show_icons=true&theme=highcontrast)  ![Top Langs](https://github-readme-stats.vercel.app/api/top-langs/?username=yvmkmym&layout=compact&theme=synthwave)
+![Kim Sang Eun's GitHub stats](https://github-readme-stats.vercel.app/api?username=vmkmym&show_icons=true&theme=highcontrast)  ![Top Langs](https://github-readme-stats.vercel.app/api/top-langs/?username=vmkmym&layout=compact&theme=synthwave)
 
 <!-- Some other section or projects showcase can be added here. -->
 </div>
