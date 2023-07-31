@@ -9,10 +9,9 @@ fun mergeSortAlgorithm(desArray: IntArray): IntArray {
     if (desArray.size <= 1) {
         return desArray
     }
-    // 배열을 잘라서 새로운 배열로 생성하는 확장 함수 .copyOfRange(범위시작, 범위끝)
-    val midElement = desArray.size / 2
-    val leftArray = desArray.copyOfRange(0, midElement)
-    val rightArray = desArray.copyOfRange(midElement, desArray.size)
+    // 배열을 자르기 (take, takeLast)
+    val leftArray = desArray.take(desArray.size / 2).toIntArray()
+    val rightArray = desArray.takeLast(desArray.size / 2).toIntArray()
     
     // mergeSortAlgorithm() 함수를 재귀적으로 호출 (분할 정복이라고 함)
     val sortLeft = mergeSortAlgorithm(leftArray)
@@ -24,9 +23,9 @@ fun mergeSortAlgorithm(desArray: IntArray): IntArray {
 
 // 분할한 배열을 내림차순 정렬된 형태로 다시 병합하는 merge()함수 만들기
 fun merge(leftArray: IntArray, rightArray: IntArray): IntArray {
+    val desArray = IntArray(leftArray.size + rightArray.size)    
     var i = 0
     var j = 0
-    val desArray = IntArray(leftArray.size + rightArray.size)    
     var k = 0
     while (i < leftArray.size && j < rightArray.size) {
         // 만약 i가 j보다 크다면 desArray에 저장하고 i, k를 증가
@@ -45,6 +44,5 @@ fun merge(leftArray: IntArray, rightArray: IntArray): IntArray {
     while (j < rightArray.size) {
         desArray[k++] = rightArray[j++]
     }
-
     return desArray
 }
