@@ -19,6 +19,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,6 +33,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.edit
+import java.util.Date
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,6 +47,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun GreetingApp() {
+    // 카운트 값을 저장하고 가져오기 위한 코드
     val activity = LocalContext.current as? Activity
     val sharedPref = remember { activity?.getPreferences(Context.MODE_PRIVATE) }
     var count by remember {
@@ -51,6 +55,43 @@ fun GreetingApp() {
         mutableStateOf(countValue.toLong())
     }
 
+    //  누적 클릭 횟수를 저장하고 가져오기 위한 코드
+    var totalClickCount by remember {
+        val totalCountValue = sharedPref?.getInt("totalClickCount", 0) ?: 0
+        mutableStateOf(totalCountValue)
+    }
+
+    //  마지막버튼클릭시간 값을 저장하고 가져오기 위한 코드
+    var lastButtonClickTime by remember {
+        val lastTime = sharedPref?.getLong("lastButtonClickTime", 0L) ?: 0L
+        mutableStateOf(if (lastTime == 0L) Date().time else lastTime)
+    }
+
+    // 버튼 클릭 시간을 저장하는 함수
+    fun saveTime() {
+        lastButtonClickTime = Date().time
+        sharedPref?.edit {
+            putLong("lastButtonClickTime", lastButtonClickTime)
+        }
+    }
+
+    // 누적 클릭 횟수를 저장하는 함수
+    fun saveClickCount() {
+        totalClickCount++
+        sharedPref?.edit {
+            putInt("totalClickCount", totalClickCount)
+            putInt("counter", count.toInt())
+
+        }
+    }
+
+    // 앱이 시작될 때 누적 클릭 횟수를 불러옴
+    LaunchedEffect(Unit) {
+        totalClickCount = sharedPref?.getInt("totalClickCount", 0) ?: 0
+        count = sharedPref?.getInt("counter", 0)?.toLong() ?: 0
+    }
+
+    // 여기서부터는 버튼 구현
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
@@ -72,32 +113,68 @@ fun GreetingApp() {
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // 2배 늘리기와 반으로 줄이기 버튼 그룹
+            // 2배 증감 버튼과 시간 기록
             ButtonGroupRow(
                 buttonDataList = listOf(
-                    ButtonData(text = "X2", color = Color.Green) { count *= 2 },
-                    ButtonData(text = "%2", color = Color.Yellow) { count /= 2 }
+                    ButtonData(text = "X2", color = Color.Green) {
+                        count *= 2
+                        saveTime()
+                        saveClickCount() // 누적 클릭 횟수 저장
+                    },
+                    ButtonData(text = "/2", color = Color.Yellow) {
+                        count /= 2
+                        saveTime()
+                        saveClickCount() // 누적 클릭 횟수 저장
+                    }
                 )
             )
 
-            // 감소와 감소 버튼 그룹
+            // 증감 버튼과 시간 기록
             ButtonGroupRow(
                 buttonDataList = listOf(
-                    ButtonData(text = "+", color = Color.White) { count++ },
-                    ButtonData(text = "-", color = Color.White) { count-- }
+                    ButtonData(text = "+", color = Color.White) {
+                        count++
+                        saveTime()
+                        saveClickCount() // 누적 클릭 횟수 저장
+                    },
+                    ButtonData(text = "-", color = Color.White) {
+                        count--
+                        saveTime()
+                        saveClickCount() // 누적 클릭 횟수 저장
+                    }
                 )
             )
 
-            // 초기화 버튼
+            // 초기화 버튼과 시간 기록
             ButtonGroupRow(
                 buttonDataList = listOf(
-                    ButtonData(text = "0", color = Color.Magenta) { count = 0L }
+                    ButtonData(text = "0", color = Color.Magenta) {
+                        count = 0
+                        saveTime()
+                        saveClickCount() // 누적 클릭 횟수 저장
+                    }
                 )
             )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            Button(
+                onClick = { saveTime() },
+                modifier = Modifier.padding(20.dp)
+            ) {
+                Text(
+                    text = "LastButtonClickTime: ${Date(lastButtonClickTime)}",
+                    style = TextStyle(
+                        fontSize = 15.sp,
+                        color = Color.White
+                    )
+                )
+            }
         }
     }
 }
 
+// 함수로 반복된 부분 빼기
 @Composable
 fun ButtonGroupRow(buttonDataList: List<ButtonData>) {
     Row(
@@ -113,10 +190,9 @@ fun ButtonGroupRow(buttonDataList: List<ButtonData>) {
     }
 }
 
-
-
 data class ButtonData(val text: String, val color: Color, val onClick: () -> Unit)
 
+// 버튼 함수 빼기
 @Composable
 fun CalculatorButton(text: String, onClick: () -> Unit) {
     Button(
