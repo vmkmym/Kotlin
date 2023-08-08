@@ -27,8 +27,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
@@ -65,12 +68,12 @@ fun MainScreen() {
 
 @Composable
 fun MyDrive() {
-    val selectedUris = remember { mutableStateListOf<Uri?>() }
+//    val uris by remember { mutableStateListOf<Uri?>() }
+    var selectedUris by remember { mutableStateOf<List<Uri?>>(emptyList()) }
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickMultipleVisualMedia(),
         onResult = { uris ->
-            selectedUris.clear()
-            selectedUris.addAll(uris)
+            selectedUris = uris
         }
     )
 
