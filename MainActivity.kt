@@ -7,6 +7,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -62,7 +63,6 @@ fun MainScreen() {
     val db = remember {
         AppDatabase.getDatabase(context)
     }
-
     val scope = rememberCoroutineScope()
 
     Column(
@@ -80,92 +80,103 @@ fun MainScreen() {
             }
         }
 
-        OutlinedTextField(
+        Spacer(modifier = Modifier.height(20.dp))
+
+        MyTextField(
             value = userNameState,
-            onValueChange = { userNameState = it },
-            label = { Text("이름을 입력하세요") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-            colors = TextFieldDefaults.outlinedTextFieldColors(
-                textColor = Color.Black,
-                cursorColor = Color.Black,
-                focusedBorderColor = Color(0xFFE2993F)
-            )
+            onValueChange = { newValue: TextFieldValue -> userNameState = newValue },
+            text = "이름을 입력하세요"
         )
         Spacer(modifier = Modifier.height(20.dp))
 
-        OutlinedTextField(
+        MyTextField(
             value = userNumberState,
-            onValueChange = { userNumberState = it },
-            label = { Text("전화번호를 입력하세요") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-            colors = TextFieldDefaults.outlinedTextFieldColors(
-                textColor = Color.Black,
-                cursorColor = Color.Black,
-                focusedBorderColor = Color(0xFF196CD3)
-            )
+            onValueChange = { newValue: TextFieldValue -> userNameState = newValue },
+            text = "전화번호를 입력하세요"
         )
         Spacer(modifier = Modifier.height(20.dp))
 
-        OutlinedTextField(
+        MyTextField(
             value = userEmailState,
-            onValueChange = { userEmailState = it },
-            label = { Text("이메일을 입력하세요") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-            colors = TextFieldDefaults.outlinedTextFieldColors(
-                textColor = Color.Black,
-                cursorColor = Color.Black,
-                focusedBorderColor = Color(0xFFE242D2)
-            )
+            onValueChange = { newValue: TextFieldValue -> userEmailState = newValue },
+            text = "이메일을 입력하세요"
         )
         Spacer(modifier = Modifier.height(20.dp))
 
-        OutlinedTextField(
+        MyTextField(
             value = userAgeState,
-            onValueChange = { userAgeState = it },
-            label = { Text("나이를 입력하세요") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-            colors = TextFieldDefaults.outlinedTextFieldColors(
-                textColor = Color.Black,
-                cursorColor = Color.Black,
-                focusedBorderColor = Color(0xFFCDDC39)
-            )
+            onValueChange = { newValue: TextFieldValue -> userAgeState = newValue },
+            text = "나이를 입력하세요"
         )
+
         Spacer(modifier = Modifier.height(20.dp))
 
-        Button(
-            onClick = {
-                val userName = userNameState.text
-                val userNumber: String = userNumberState.text
-                val userEmail = userEmailState.text
-                val userAge: String = userAgeState.text
+        Row {
+            Button(
+                onClick = {
+                    val userName = userNameState.text
+                    val userNumber: String = userNumberState.text
+                    val userEmail = userEmailState.text
+                    val userAge: String = userAgeState.text
 
-                if (userName.isNotBlank()) {
-                    val intent = Intent(context, UserDetailsActivity::class.java)
-                    intent.putExtra("name", userName)
-                    intent.putExtra("phone", userNumber)
-                    intent.putExtra("email", userEmail)
-                    intent.putExtra("age", userAge)
-                    context.startActivity(intent)
+                    if (userName.isNotBlank()) {
+                        val intent = Intent(context, UserDetailsActivity::class.java)
+                        intent.putExtra("name", userName)
+                        intent.putExtra("phone", userNumber)
+                        intent.putExtra("email", userEmail)
+                        intent.putExtra("age", userAge)
+                        context.startActivity(intent)
 
-                    val newUser =
-                        User(name = userName, phone = userNumber, email = userEmail, age = userAge)
-                    scope.launch(Dispatchers.IO) {
-                        db.userDao().insertAll(newUser)
+                        val newUser =
+                            User(
+                                name = userName,
+                                phone = userNumber,
+                                email = userEmail,
+                                age = userAge
+                            )
+                        scope.launch(Dispatchers.IO) {
+                            db.userDao().insertAll(newUser)
+                        }
                     }
-                }
-            },
-            enabled = userNameState.text.isNotBlank(),
-            shape = RoundedCornerShape(8.dp),
-            colors = ButtonDefaults.buttonColors(contentColor = Color.White)
-        ) {
-            Text(text = "등록", fontSize = 20.sp, color = Color.White)
+                },
+                enabled = userNameState.text.isNotBlank(),
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.buttonColors(contentColor = Color.White)
+            ) {
+                Text(text = "등록", fontSize = 20.sp, color = Color.White)
+            }
+            Spacer(modifier = Modifier.height(20.dp))
+            Button(onClick = { /*TODO*/ }) {
+                // 새로고침 하는 버튼 만들기 (UserItem 반영된 거 바로 보기 위해)
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+            Button(onClick = { /*TODO*/ }) {
+                // 등록버튼 안 눌러도 연락처 리스트를 볼 수 있는 버튼 만들기 (등록 하지 않고 리스트 보고 싶을 때)
+            }
         }
-        Spacer(modifier = Modifier.height(20.dp))
     }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun MyTextField(
+    value: TextFieldValue,
+    onValueChange: (TextFieldValue) -> Unit,
+    text: String
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(text = text) },
+        singleLine = true,
+        modifier = Modifier.fillMaxWidth(),
+        colors = TextFieldDefaults.outlinedTextFieldColors(
+            textColor = Color.Black,
+            cursorColor = Color.Black,
+            focusedBorderColor = Color(0xFFCDDC39)
+        )
+    )
 }
 
 @Composable
