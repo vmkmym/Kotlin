@@ -1,0 +1,304 @@
+package com.example.mytextrecognition
+​
+import android.graphics.ImageDecoder
+import android.net.Uri
+import android.os.Build
+import android.os.Bundle
+import android.provider.MediaStore
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.compose.setContent
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import com.example.mytextrecognition.ui.theme.MyTextRecognitionTheme
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.sp
+import com.google.mlkit.common.model.DownloadConditions
+import com.google.mlkit.nl.translate.TranslateLanguage
+import com.google.mlkit.nl.translate.Translation
+import com.google.mlkit.nl.translate.Translator
+import com.google.mlkit.nl.translate.TranslatorOptions
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.korean.KoreanTextRecognizerOptions
+import java.io.IOException
+​
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            MyTextRecognitionTheme {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    TextRecognitionScreen()
+                }
+            }
+        }
+    }
+}
+​
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TextRecognitionScreen() {
+    var inputText by remember { mutableStateOf("") }
+    val translatedTextState = remember { mutableStateOf("") }
+    var enabledKoTranslator by remember { mutableStateOf(false) }
+    var enabledJaTranslator by remember { mutableStateOf(false) }
+    var enabledZhTranslator by remember { mutableStateOf(false) }
+    var enabledDeTranslator by remember { mutableStateOf(false) }
+​
+    val koTranslator = remember { createTranslator(target = TranslateLanguage.KOREAN) }
+    val jaTranslator = remember { createTranslator(target = TranslateLanguage.JAPANESE) }
+    val zhTranslator = remember { createTranslator(target = TranslateLanguage.CHINESE) }
+    val deTranslator = remember { createTranslator(target = TranslateLanguage.GERMAN) }
+​
+    LaunchedEffect(Unit) {
+        val conditions = DownloadConditions.Builder()
+            .requireWifi()
+            .build()
+​
+        koTranslator.downloadModelIfNeeded(conditions)
+            .addOnSuccessListener {
+                enabledKoTranslator = true
+            }
+            .addOnFailureListener {}
+​
+        jaTranslator.downloadModelIfNeeded(conditions)
+            .addOnSuccessListener {
+                enabledJaTranslator = true
+            }
+            .addOnFailureListener {}
+​
+        zhTranslator.downloadModelIfNeeded(conditions)
+            .addOnSuccessListener {
+                enabledZhTranslator = true
+            }
+            .addOnFailureListener {}
+​
+        deTranslator.downloadModelIfNeeded(conditions)
+            .addOnSuccessListener {
+                enabledDeTranslator = true
+            }
+            .addOnFailureListener {}
+​
+    }
+​
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                OutlinedTextField(
+                    value = inputText,
+                    onValueChange = { inputText = it },
+                    label = { Text(text = "번역할 문장을 적어주세요!") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(IntrinsicSize.Max)
+                )
+            }
+        }
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth()
+            ) {
+                Text(text = translatedTextState.value)
+            }
+        }
+        LazyRow(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(100.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            item {
+                TransButton(
+                    myTranslator = koTranslator,
+                    inputText = inputText,
+                    onTranslationComplete = { translatedText ->
+                        translatedTextState.value = translatedText
+                    },
+                    enabled = enabledKoTranslator,
+                    buttonText = "한국어"
+                )
+            }
+            item {
+                TransButton(
+                    myTranslator = jaTranslator,
+                    inputText = inputText,
+                    onTranslationComplete = { translatedText ->
+                        translatedTextState.value = translatedText
+                    },
+                    enabled = enabledJaTranslator,
+                    buttonText = "일본어"
+                )
+            }
+            item {
+                TransButton(
+                    myTranslator = zhTranslator,
+                    inputText = inputText,
+                    onTranslationComplete = { translatedText ->
+                        translatedTextState.value = translatedText
+                    },
+                    enabled = enabledZhTranslator,
+                    buttonText = "중국어"
+                )
+            }
+            item {
+                TransButton(
+                    myTranslator = deTranslator,
+                    inputText = inputText,
+                    onTranslationComplete = { translatedText ->
+                        translatedTextState.value = translatedText
+                    },
+                    enabled = enabledDeTranslator,
+                    buttonText = "독일어"
+                )
+            }
+        }
+        MyGallery()
+    }
+}
+​
+@Composable
+fun MyGallery() {
+    var selectedUri by remember { mutableStateOf<Uri?>(null) }
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia(),
+        onResult = { uri -> selectedUri = uri }
+    )
+​
+    var textRecognized by remember { mutableStateOf("") }
+    var image: InputImage
+//    val clipboardManager = LocalClipboardManager.current
+​
+    Column {
+        val uri = selectedUri
+        selectedUri?.let {
+            val context = LocalContext.current
+            val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                ImageDecoder.decodeBitmap(
+                    ImageDecoder.createSource(
+                        context.contentResolver,
+                        it
+                    )
+                )
+            } else {
+                MediaStore.Images.Media.getBitmap(context.contentResolver, it)
+            }
+            //파일 URI 사용
+            try {
+                image = InputImage.fromFilePath(context, selectedUri!!)
+                val recognizer = TextRecognition.getClient(KoreanTextRecognizerOptions.Builder().build())
+                val result = recognizer.process(image)
+                    .addOnSuccessListener { visionText ->
+                        textRecognized = visionText.text
+                    }
+                    .addOnFailureListener { e ->
+​
+                    }
+​
+            } catch (e: IOException) {
+                e.printStackTrace()
+            }
+        }
+    }
+    Button(
+        onClick = {
+            launcher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo))
+        },
+        modifier = Modifier
+            .padding(top = 16.dp)
+            .fillMaxWidth()
+    ) {
+        Text(text = "이미지 텍스트 인식 버튼", fontSize = 15.sp)
+    }
+    Text(text = textRecognized)
+}
+​
+​
+@Composable
+private fun TransButton(
+    myTranslator: Translator,
+    inputText: String,
+    onTranslationComplete: (String) -> Unit,
+    enabled: Boolean,
+    buttonText: String
+) {
+    Button(
+        onClick = {
+            myTranslator.translate(inputText)
+                .addOnSuccessListener { text ->
+                    onTranslationComplete(text)
+                }
+        },
+        modifier = Modifier
+            .height(48.dp)
+            .padding(top = 16.dp),
+        enabled = enabled
+    ) {
+        Text(text = buttonText, color = Color.White)
+    }
+}
+​
+private fun createTranslator(target: String): Translator {
+    val options = TranslatorOptions.Builder()
+        .setSourceLanguage(TranslateLanguage.ENGLISH)
+        .setTargetLanguage(target)
+        .build()
+    return Translation.getClient(options)
+}
+
+
+@Preview(showBackground = true)
+@Composable
+fun TextRecognitionPreview() {
+    MyTextRecognitionTheme {
+        TextRecognitionScreen()
+    }
+}
+​
+// 어떤 기술을 써서 어떤 코드를 구성했는지가 개발자들의 포트폴리오다.
+/* 엔지니어 포폴은 MLKit 사용해서 이미지에 있는 텍스트 인식을 했다..
+* */
