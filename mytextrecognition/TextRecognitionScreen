@@ -1,18 +1,23 @@
 package com.example.mytextrecognition
-
 import android.graphics.ImageDecoder
-import android.net.Uri
 import android.os.Build
-import android.os.Bundle
 import android.provider.MediaStore
+import android.app.Activity
+import android.content.Intent
+import android.net.Uri
+import android.os.Bundle
+import android.speech.RecognizerIntent
+import android.view.MotionEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -45,14 +50,17 @@ import com.google.mlkit.nl.translate.Translation
 import com.google.mlkit.nl.translate.Translator
 import com.google.mlkit.nl.translate.TranslatorOptions
 import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.digitalink.Ink
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.korean.KoreanTextRecognizerOptions
 import java.io.IOException
+import java.util.Locale
 
 // firebaseAnalytics 객체 선언하기
-private lateinit var firebaseAnalytics: FirebaseAnalytics
 
 class MainActivity : ComponentActivity() {
+    // firebaseAnalytics 변수 선언
+    private lateinit var firebaseAnalytics: FirebaseAnalytics
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         firebaseAnalytics = Firebase.analytics
@@ -69,60 +77,58 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TextRecognitionScreen() {
     var inputText by remember { mutableStateOf("") }
     val translatedTextState = remember { mutableStateOf("") }
+    
     var enabledKoTranslator by remember { mutableStateOf(false) }
     var enabledJaTranslator by remember { mutableStateOf(false) }
     var enabledZhTranslator by remember { mutableStateOf(false) }
     var enabledDeTranslator by remember { mutableStateOf(false) }
-
+    
     val koTranslator = remember { createTranslator(target = TranslateLanguage.KOREAN) }
     val jaTranslator = remember { createTranslator(target = TranslateLanguage.JAPANESE) }
     val zhTranslator = remember { createTranslator(target = TranslateLanguage.CHINESE) }
     val deTranslator = remember { createTranslator(target = TranslateLanguage.GERMAN) }
-
+    
     LaunchedEffect(Unit) {
         val conditions = DownloadConditions.Builder()
             .requireWifi()
             .build()
-
+        
         koTranslator.downloadModelIfNeeded(conditions)
             .addOnSuccessListener {
                 enabledKoTranslator = true
             }
             .addOnFailureListener {}
-
+        
         jaTranslator.downloadModelIfNeeded(conditions)
             .addOnSuccessListener {
                 enabledJaTranslator = true
             }
             .addOnFailureListener {}
-
+        
         zhTranslator.downloadModelIfNeeded(conditions)
             .addOnSuccessListener {
                 enabledZhTranslator = true
             }
             .addOnFailureListener {}
-
+        
         deTranslator.downloadModelIfNeeded(conditions)
             .addOnSuccessListener {
                 enabledDeTranslator = true
             }
             .addOnFailureListener {}
-
     }
-
+    // 번역기
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        Card(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 16.dp)
@@ -142,24 +148,18 @@ private fun TextRecognitionScreen() {
                         .fillMaxWidth()
                         .height(IntrinsicSize.Max)
                 )
-            }
-        }
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-        ) {
-            Column(
-                modifier = Modifier
-                    .padding(16.dp)
-                    .fillMaxWidth()
-            ) {
-                Text(text = translatedTextState.value)
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(
+                    text = translatedTextState.value,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                )
             }
         }
         LazyRow(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(100.dp),
+                .height(120.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             item {
@@ -218,58 +218,53 @@ fun MyGallery() {
         contract = ActivityResultContracts.PickVisualMedia(),
         onResult = { uri -> selectedUri = uri }
     )
-
     var textRecognized by remember { mutableStateOf("") }
     var image: InputImage
     val clipboardManager = LocalClipboardManager.current
-
+    // 이미지에서 텍스트 인식, 그리고 합쳐서 추출하는 작업
     Column {
-        val uri = selectedUri
         selectedUri?.let {
             val context = LocalContext.current
-            val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                ImageDecoder.decodeBitmap(
-                    ImageDecoder.createSource(
-                        context.contentResolver,
-                        it
-                    )
-                )
-            } else {
-                MediaStore.Images.Media.getBitmap(context.contentResolver, it)
-            }
-            //파일 URI 사용
             try {
                 image = InputImage.fromFilePath(context, selectedUri!!)
-                val recognizer = TextRecognition.getClient(KoreanTextRecognizerOptions.Builder().build())
-
+                val recognizer =
+                    TextRecognition.getClient(KoreanTextRecognizerOptions.Builder().build())
+                ​
                 val result = recognizer.process(image)
                     .addOnSuccessListener { visionText ->
-                        // 텍스트 추출했으면 문장 만들기
                         val combinedText = StringBuilder()
-                        // 인식된 텍스트 블록에서 텍스트 추출하기 (필요한 부분만 남기기)
                         for (block in visionText.textBlocks) {
                             for (line in block.lines) {
                                 for (element in line.elements) {
                                     val elementText = element.text
-                                    // 추출한 텍스트 붙이기
                                     combinedText.append(elementText).append(" ")
                                 }
                             }
                         }
-                        //문장을 문자열 타입으로 만들고 공백 제거하기
                         val finalText = combinedText.toString().trim()
-                        // 이제 문장을 제대로 추출함
                         textRecognized = finalText
                     }
-                    .addOnFailureListener { e ->
-
-                    }
-
             } catch (e: IOException) {
                 e.printStackTrace()
             }
         }
     }
+    // 음성인식을 처리하는 부분
+    // 음성인식 결과 반환 시 작동할 로직
+    var voicetext by remember { mutableStateOf("") }
+    val launcherSpeech = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult(),
+        onResult = { result ->
+            val data = result.data
+            // 음성인식 결과를 가져오는 코드
+            val textResults = data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+            if(!textResults.isNullOrEmpty()) {
+                // 음성인식을 했을 때 음성이 여러 개 일 경우 리스트의 첫 번째 음성을 저장하기
+                voicetext = textResults[0]
+            }
+        }
+    )
+    // 버튼들
     Column {
         // 이미지 텍스트 인식 버튼
         Button(
@@ -282,11 +277,10 @@ fun MyGallery() {
         ) {
             Text(text = "이미지에서 텍스트 가져오기", fontSize = 15.sp)
         }
-
-        // "복사" 버튼
+        
+        // 이미지에서 추출한 텍스트 "복사" 버튼
         Button(
             onClick = {
-                // 텍스트를 클립보드에 복사
                 val annotatedText = AnnotatedString(textRecognized)
                 clipboardManager.setText(annotatedText)
             },
@@ -294,13 +288,46 @@ fun MyGallery() {
                 .padding(top = 13.dp)
                 .fillMaxWidth()
         ) {
-            Text(text = "가져온 텍스트 복사하기", fontSize = 15.sp)
+            Text(text = "이미지 텍스트 복사하기", fontSize = 15.sp)
         }
-        // 추출된 텍스트 표시
-        Text(text = textRecognized, modifier = Modifier.padding(top = 16.dp))
+        
+        // 음성 인식 버튼
+        Button(
+            onClick = {
+                val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
+                intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "us-US")
+                intent.putExtra(
+                    RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                    RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
+                )
+                launcherSpeech.launch(intent)
+            },
+            modifier = Modifier
+                .padding(top = 13.dp)
+                .fillMaxWidth()
+        ) {
+            Text(text = "음성 인식", fontSize = 15.sp)
+        }
+        
+        // 음성에서 추출한 텍스트를 클립보드에 복사
+        Button(
+            onClick = {
+                val annotatedVoice = AnnotatedString(voicetext)
+                clipboardManager.setText(annotatedVoice)
+            },
+            modifier = Modifier
+                .padding(top = 13.dp)
+                .fillMaxWidth()
+        ) { 
+            Text(text = "음성인식 텍스트 복사하기", fontSize = 15.sp) 
+        }
+        
+        // 이미지에서 추출된 텍스트 표시, 추출된 음성을 텍스트로 표시
+        Text(text = "이미지 인식 결과 : ${textRecognized}", modifier = Modifier.padding(top = 16.dp))
+        Spacer(modifier = Modifier.height(10.dp))
+        Text(text = "음성 인식 결과 : ${voicetext}", modifier = Modifier.padding(top = 16.dp))
     }
 }
-
 
 @Composable
 private fun TransButton(
@@ -332,6 +359,41 @@ private fun createTranslator(target: String): Translator {
         .setTargetLanguage(target)
         .build()
     return Translation.getClient(options)
+}
+
+
+@Composable
+fun DegitalInkRecognition() {
+    var inkBuilder = Ink.builder()
+    lateinit var strokeBuilder: Ink.Stroke.Builder
+    ​
+    // 새 이벤트가 있을 때마다 호출합니다.
+    fun addNewTouchEvent(event: MotionEvent) {
+        val action = event.actionMasked
+        val x = event.x
+        val y = event.y
+        var t = System.currentTimeMillis()
+        ​
+        //설정에서 타이밍 정보를 제공하지 않는 경우 Ink.Point.create 호출에서 세 번째 매개 변수(t)를 생략할 수 있습니다
+        when (action) {
+            MotionEvent.ACTION_DOWN -> {
+                strokeBuilder = Ink.Stroke.builder()
+                strokeBuilder.addPoint(Ink.Point.create(x, y, t))
+            }
+                ​
+                MotionEvent.ACTION_MOVE -> strokeBuilder!!.addPoint(Ink.Point.create(x, y, t))
+            MotionEvent.ACTION_UP -> {
+                strokeBuilder.addPoint(Ink.Point.create(x, y, t))
+                inkBuilder.addStroke(strokeBuilder.build())
+            }
+                ​
+            else -> {
+                // 잉크 구성과 관련이 없는 작업
+            }
+        }
+    }
+// recognizer에 보낼 내용
+    val ink = inkBuilder.build()
 }
 
 @Preview(showBackground = true)
