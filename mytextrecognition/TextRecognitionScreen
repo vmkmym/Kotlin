@@ -33,10 +33,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
-//import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.sp
+import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.analytics.ktx.analytics
+import com.google.firebase.ktx.Firebase
 import com.google.mlkit.common.model.DownloadConditions
 import com.google.mlkit.nl.translate.TranslateLanguage
 import com.google.mlkit.nl.translate.Translation
@@ -47,9 +49,13 @@ import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.korean.KoreanTextRecognizerOptions
 import java.io.IOException
 
+// firebaseAnalytics 객체 선언하기
+private lateinit var firebaseAnalytics: FirebaseAnalytics
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        firebaseAnalytics = Firebase.analytics
         setContent {
             MyTextRecognitionTheme {
                 Surface(
@@ -62,6 +68,8 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -262,18 +270,6 @@ fun MyGallery() {
             }
         }
     }
-//
-//    Button(
-//        onClick = {
-//            launcher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-//        },
-//        modifier = Modifier
-//            .padding(top = 13.dp)
-//            .fillMaxWidth()
-//    ) {
-//        Text(text = "이미지 텍스트 인식 버튼", fontSize = 15.sp)
-//    }
-//    Text(text = textRecognized)
     Column {
         // 이미지 텍스트 인식 버튼
         Button(
