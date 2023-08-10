@@ -1,5 +1,5 @@
 package com.example.mytextrecognition
-​
+
 import android.graphics.ImageDecoder
 import android.net.Uri
 import android.os.Build
@@ -33,7 +33,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
+//import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.sp
 import com.google.mlkit.common.model.DownloadConditions
 import com.google.mlkit.nl.translate.TranslateLanguage
@@ -44,7 +46,7 @@ import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.korean.KoreanTextRecognizerOptions
 import java.io.IOException
-​
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,7 +62,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-​
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TextRecognitionScreen() {
@@ -70,43 +72,43 @@ private fun TextRecognitionScreen() {
     var enabledJaTranslator by remember { mutableStateOf(false) }
     var enabledZhTranslator by remember { mutableStateOf(false) }
     var enabledDeTranslator by remember { mutableStateOf(false) }
-​
+
     val koTranslator = remember { createTranslator(target = TranslateLanguage.KOREAN) }
     val jaTranslator = remember { createTranslator(target = TranslateLanguage.JAPANESE) }
     val zhTranslator = remember { createTranslator(target = TranslateLanguage.CHINESE) }
     val deTranslator = remember { createTranslator(target = TranslateLanguage.GERMAN) }
-​
+
     LaunchedEffect(Unit) {
         val conditions = DownloadConditions.Builder()
             .requireWifi()
             .build()
-​
+
         koTranslator.downloadModelIfNeeded(conditions)
             .addOnSuccessListener {
                 enabledKoTranslator = true
             }
             .addOnFailureListener {}
-​
+
         jaTranslator.downloadModelIfNeeded(conditions)
             .addOnSuccessListener {
                 enabledJaTranslator = true
             }
             .addOnFailureListener {}
-​
+
         zhTranslator.downloadModelIfNeeded(conditions)
             .addOnSuccessListener {
                 enabledZhTranslator = true
             }
             .addOnFailureListener {}
-​
+
         deTranslator.downloadModelIfNeeded(conditions)
             .addOnSuccessListener {
                 enabledDeTranslator = true
             }
             .addOnFailureListener {}
-​
+
     }
-​
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -200,7 +202,7 @@ private fun TextRecognitionScreen() {
         MyGallery()
     }
 }
-​
+
 @Composable
 fun MyGallery() {
     var selectedUri by remember { mutableStateOf<Uri?>(null) }
@@ -208,11 +210,11 @@ fun MyGallery() {
         contract = ActivityResultContracts.PickVisualMedia(),
         onResult = { uri -> selectedUri = uri }
     )
-​
+
     var textRecognized by remember { mutableStateOf("") }
     var image: InputImage
-//    val clipboardManager = LocalClipboardManager.current
-​
+    val clipboardManager = LocalClipboardManager.current
+
     Column {
         val uri = selectedUri
         selectedUri?.let {
@@ -231,33 +233,79 @@ fun MyGallery() {
             try {
                 image = InputImage.fromFilePath(context, selectedUri!!)
                 val recognizer = TextRecognition.getClient(KoreanTextRecognizerOptions.Builder().build())
+
                 val result = recognizer.process(image)
                     .addOnSuccessListener { visionText ->
-                        textRecognized = visionText.text
+                        // 텍스트 추출했으면 문장 만들기
+                        val combinedText = StringBuilder()
+                        // 인식된 텍스트 블록에서 텍스트 추출하기 (필요한 부분만 남기기)
+                        for (block in visionText.textBlocks) {
+                            for (line in block.lines) {
+                                for (element in line.elements) {
+                                    val elementText = element.text
+                                    // 추출한 텍스트 붙이기
+                                    combinedText.append(elementText).append(" ")
+                                }
+                            }
+                        }
+                        //문장을 문자열 타입으로 만들고 공백 제거하기
+                        val finalText = combinedText.toString().trim()
+                        // 이제 문장을 제대로 추출함
+                        textRecognized = finalText
                     }
                     .addOnFailureListener { e ->
-​
+
                     }
-​
+
             } catch (e: IOException) {
                 e.printStackTrace()
             }
         }
     }
-    Button(
-        onClick = {
-            launcher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo))
-        },
-        modifier = Modifier
-            .padding(top = 16.dp)
-            .fillMaxWidth()
-    ) {
-        Text(text = "이미지 텍스트 인식 버튼", fontSize = 15.sp)
+//
+//    Button(
+//        onClick = {
+//            launcher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+//        },
+//        modifier = Modifier
+//            .padding(top = 13.dp)
+//            .fillMaxWidth()
+//    ) {
+//        Text(text = "이미지 텍스트 인식 버튼", fontSize = 15.sp)
+//    }
+//    Text(text = textRecognized)
+    Column {
+        // 이미지 텍스트 인식 버튼
+        Button(
+            onClick = {
+                launcher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            },
+            modifier = Modifier
+                .padding(top = 13.dp)
+                .fillMaxWidth()
+        ) {
+            Text(text = "이미지에서 텍스트 가져오기", fontSize = 15.sp)
+        }
+
+        // "복사" 버튼
+        Button(
+            onClick = {
+                // 텍스트를 클립보드에 복사
+                val annotatedText = AnnotatedString(textRecognized)
+                clipboardManager.setText(annotatedText)
+            },
+            modifier = Modifier
+                .padding(top = 13.dp)
+                .fillMaxWidth()
+        ) {
+            Text(text = "가져온 텍스트 복사하기", fontSize = 15.sp)
+        }
+        // 추출된 텍스트 표시
+        Text(text = textRecognized, modifier = Modifier.padding(top = 16.dp))
     }
-    Text(text = textRecognized)
 }
-​
-​
+
+
 @Composable
 private fun TransButton(
     myTranslator: Translator,
@@ -281,7 +329,7 @@ private fun TransButton(
         Text(text = buttonText, color = Color.White)
     }
 }
-​
+
 private fun createTranslator(target: String): Translator {
     val options = TranslatorOptions.Builder()
         .setSourceLanguage(TranslateLanguage.ENGLISH)
@@ -290,7 +338,6 @@ private fun createTranslator(target: String): Translator {
     return Translation.getClient(options)
 }
 
-
 @Preview(showBackground = true)
 @Composable
 fun TextRecognitionPreview() {
@@ -298,7 +345,3 @@ fun TextRecognitionPreview() {
         TextRecognitionScreen()
     }
 }
-​
-// 어떤 기술을 써서 어떤 코드를 구성했는지가 개발자들의 포트폴리오다.
-/* 엔지니어 포폴은 MLKit 사용해서 이미지에 있는 텍스트 인식을 했다..
-* */
