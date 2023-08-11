@@ -1,4 +1,5 @@
 package com.example.mytextrecognition
+
 import android.graphics.ImageDecoder
 import android.os.Build
 import android.provider.MediaStore
